@@ -6,27 +6,6 @@
 # Editorial
 # Género (ficción, política, biografía, historia, aventura, etc)
 
-
-# FUNCIONES
-# [X] Dar de alta un libro (se deberá verificar que el libro no exista).
-# [X] Dar de baja un libro (se deberá verificar que el libro exista).
-# [X] Consultar por un libro de un determinado título.
-# [-] Modificar los datos de un libro.
-# Listados: 
-    #  [-] Listar todos los autores.
-    #  [O] Listar todos los libros.
-    #  [O] Listar todos los libros de un género determinado.
-    #  [O] Listar todos los libros que posee un autor determinado.
-    #  [O] Listar todos los libros de una editorial determinada.
-    #  [O] Listar todos los libros de una editorial determinada en un rango de años de edición.
-    #  [O] Listar todos los autores de una determinada editorial.
-    #  [O] Listar todos los libros que fueron editados en un determinado año.
-    #  [O] Listar todos los libros de los autores cuyos apellidos comienzan con una letra
-    #  determinada.
-    #  [O] Listar todos los libros cuyos títulos contengan una palabra determinada.
-
-# ----------------------------------------------------------------------------------------------------------------------------
-
 # SUMMARY 
     # Commit the changes
     # conn.commit()
@@ -38,7 +17,8 @@ import random
 def createDataBase(conn):
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS books
-                        (isbn INTEGER PRIMARY KEY,
+                        (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        isbn INTEGER,
                         title TEXT,
                         author TEXT,
                         pages INTEGER,
@@ -68,6 +48,29 @@ def generate_isbn13():
 
     return isbn_code
 
+def printColumns(data,cursor):
+    columns = [column[0] for column in cursor.description]
+
+    # Adjust the width for the 'title' column in the header
+    header_widths = [35 if column == 'title' else 6 if column == 'id' else 20 for column in columns]
+
+    # Print column headers
+    header = "|".join(column.upper().ljust(width) for column, width in zip(columns, header_widths))
+    print(header)
+    print("-" * (len(header)-5))
+
+    # Print data rows
+    for row in data:
+        # Adjust the width for the 'title' column in the data rows
+        title_width = 35
+        id_width = 6
+        formatted_row = [
+            str(value).ljust(title_width) if column == 'title' else str(value).ljust(id_width) if column == 'id' else str(value).ljust(20)
+            for column, value in zip(columns, row)
+        ]
+        row_str = "|".join(formatted_row)
+        print(row_str)
+
 def addBook(conn):
     cursor = conn.cursor()
 
@@ -80,7 +83,7 @@ def addBook(conn):
     editorial = input('Editorial: ')
     genre = input('Genre: ')
 
-    cursor.execute("INSERT INTO books (isbn, title, author, pages, edition_date, editorial, genre) VALUES (?, ?, ?, ?, ?, ?, ?)", (isbn, author, title, pages, edition_date, editorial, genre))
+    cursor.execute("INSERT INTO books (isbn, title, author, pages, edition_date, editorial, genre) VALUES (?, ?, ?, ?, ?, ?, ?)", (isbn, title, author, pages, edition_date, editorial, genre))
 
     conn.commit()
 
@@ -103,60 +106,137 @@ def queryTitleBook(conn):
 
     data = cursor.fetchall() # Agarra todos los campos del registro
 
-    # Print data with field names and values
+    printColumns(data,cursor)
+
+def modifyBook(conn):
+    cursor = conn.cursor()
+
+    isbn_to_modify = input('Ingrese el ISBN del libro a modificar: ')
+    print()
+
+    cursor.execute("SELECT * FROM books WHERE isbn = ?", (isbn_to_modify,))
+
+    data = cursor.fetchall() # Agarra todos los campos del registro
     columns = [column[0] for column in cursor.description]
     for row in data:
         for column, value in zip(columns, row):
-            print(f"{column.upper()}: {value}")
-        print("---")
+            modification = (f'Desea modificar el "{column}" de este libro? [Y/N]: ').upper()
+            if modification == 'Y':
+                if column == 'pages':
+                    new_value = int(input('Ingrese el nuevo valor: '))
+                else:
+                    new_value = input('Ingrese el nuevo valor: ')
+                column_name = column
+                cursor.execute(f"UPDATE books SET {column_name} = ? WHERE isbn = ?", (new_value, isbn_to_modify))
 
-# def modifyBook(conn):
-#     cursor = conn.cursor()
+    conn.commit()
 
-#     isbn_to_modify = input('Ingrese el ISBN del libro a modificar: ')
-#     print()
+# LIST FUNCTIONS --------------------------------------------------------------------------------------------------------
 
-#     cursor.execute("SELECT * FROM books WHERE isbn = ?", (isbn_to_modify,))
-
-#     data = cursor.fetchall() # Agarra todos los campos del registro
-#     columns = [column[0] for column in cursor.description]
-#     for row in data:
-#         for column, value in zip(columns, row):
-#             modification = (f'Desea modificar el "{column}" de este libro? [Y/N]: ')
-#             if modification == 'Y':
-#                 if column == 'pages':
-#                     new_value = int(input('Ingrese el nuevo valor: '))
-#                 else:
-#                     new_value = input('Ingrese el nuevo valor: ')
-#                 column_name = column
-#                 cursor.execute(f"UPDATE books SET {column_name} = ? WHERE isbn = ?", (new_value, isbn_to_modify))
-
-#     conn.commit()
-
-def listAuthors(conn):
+def listAllAuthors(conn):
     cursor = conn.cursor()
 
     cursor.execute("SELECT DISTINCT author FROM books")
 
     distinct_authors = cursor.fetchall()
 
-    for author in distinct_authors:
-        print(author[0])
+    printColumns(distinct_authors,cursor)
+        
+def listBookTitles(conn):
+    cursor = conn.cursor()
 
-    # # Print data with field names and values
-    # columns = [column[0] for column in cursor.description]
-    # for row in data:
-    #     for column, value in zip(columns, row):
-    #         print(f"{column.upper()}: {value}")
-    #     print("---")
+    print('\nTítulos: ')
+    cursor.execute("SELECT DISTINCT title FROM books")
+
+    distinct_titles = cursor.fetchall()
+    printColumns(distinct_titles,cursor)
+
+# ALL DATA 
 
 def listEverything(conn):
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM books")
     data = cursor.fetchall()
-    for row in data:
-        print(row)
+
+    print(data)
+
+    printColumns(data,cursor)
+
+def listGenre(conn):
+    cursor = conn.cursor()
+
+    genre = input('Ingrese el género a listar: ')
+
+    print('\nTítulos: ')
+    cursor.execute("SELECT * FROM books WHERE genre = ?", (genre,))
+
+    distinct_genres = cursor.fetchall()
+    printColumns(distinct_genres,cursor)
+
+def listAuthor(conn):
+    cursor = conn.cursor()
+
+    author = input('Ingrese el autor a listar: ')
+
+    cursor.execute("SELECT * FROM books WHERE author = ?", (author,))
+
+    author_data = cursor.fetchall()
+    printColumns(author_data,cursor)
+
+def listEditorial(conn):
+    cursor = conn.cursor()
+
+    editorial = input('Ingrese la editorial a listar: ')
+
+    cursor.execute("SELECT * FROM books WHERE editorial = ?", (editorial,))
+
+    editorial_data = cursor.fetchall()
+    printColumns(editorial_data,cursor)
+
+def listEditorialYears(conn):
+    cursor = conn.cursor()
+
+    editorial = input('Ingrese la editorial a listar: ')
+    edition_date_1 = input('Ingrese la primera fecha: ')
+    edition_date_2 = input('Ingrese la segunda fecha: ')
+
+    cursor.execute("SELECT * FROM books WHERE editorial = ? and edition_date BETWEEN ? and ? ORDER BY edition_date", (editorial,edition_date_1,edition_date_2,))
+
+    editorial_data = cursor.fetchall()
+    printColumns(editorial_data,cursor)
+
+def listAYear(conn):
+    cursor = conn.cursor()
+
+    edition_year = input('Ingrese el año a listar: ')
+    
+    cursor.execute("SELECT * FROM books WHERE edition_date LIKE ?", (f'%{edition_year}%',))
+
+    editorial_data = cursor.fetchall()
+    printColumns(editorial_data,cursor)
+
+def listLetterAuthor(conn):
+    cursor = conn.cursor()
+
+    author_letter = input('Ingrese la letra del apellido del autor a listar: ')
+    
+    cursor.execute("SELECT * FROM books WHERE SUBSTR(author, 1, 1) = ?", (author_letter,))
+
+    author_data = cursor.fetchall()
+    printColumns(author_data,cursor)
+
+def listWordInTitle(conn):
+    cursor = conn.cursor()
+
+    title_word = input('Ingrese la palabra que deben contener los títulos a listar: ')
+    
+    cursor.execute("SELECT * FROM books WHERE title LIKE ?", (f'%{title_word}%',))
+
+    data = cursor.fetchall()
+    printColumns(data,cursor)
+
+# MAIN ------------------------------------------------------------------------------------------------------------------------------
 
 def main():
     # Open connection
@@ -174,10 +254,26 @@ def main():
             listEverything(conn)
         elif action == 'QT':
             queryTitleBook(conn)
-        # elif action == 'M':
-        #     modifyBook(conn)
+        elif action == 'M':
+            modifyBook(conn)
+        elif action == 'LAA':
+            listAllAuthors(conn)
+        elif action == 'LT':
+            listBookTitles(conn)
+        elif action == 'LG':
+            listGenre(conn)
         elif action == 'LA':
-            listAuthors(conn)
+            listAuthor(conn)
+        elif action == 'LE':
+            listEditorial(conn)
+        elif action == 'LEY':
+            listEditorialYears(conn)
+        elif action == 'LY':
+            listAYear(conn)
+        elif action == 'WT':
+            listWordInTitle(conn)
+        
+
         action = defineAction()
 
     # Close connection
