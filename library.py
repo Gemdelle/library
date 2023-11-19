@@ -10,6 +10,10 @@
     # Commit the changes
     # conn.commit()
 
+
+# BOOK LIST
+# The Garden of Forking Paths
+
 import sqlite3
 from datetime import datetime, timedelta
 import random
@@ -120,7 +124,7 @@ def modifyBook(conn):
     columns = [column[0] for column in cursor.description]
     for row in data:
         for column, value in zip(columns, row):
-            modification = (f'Desea modificar el "{column}" de este libro? [Y/N]: ').upper()
+            modification = input(f'Desea modificar el "{column}" de este libro? [Y/N]: ').upper()
             if modification == 'Y':
                 if column == 'pages':
                     new_value = int(input('Ingrese el nuevo valor: '))
