@@ -332,18 +332,18 @@ def deleteBook(conn):
     conn.commit()
 
 
-def queryTitleBook(conn):
+def queryTitleBook(conn,title):
     cursor = conn.cursor()
 
-    title = input('Ingrese el título del libro a consultar: ')
-    print()
+    # title = input('Ingrese el título del libro a consultar: ')
+    # print()
 
     cursor.execute("SELECT * FROM books WHERE title = ?", (title,))
 
     data = cursor.fetchall()  # Agarra todos los campos del registro
-
-    printColumns(data, cursor)
-
+    
+    # printColumns(data, cursor)
+    return data
 
 def modifyBook(conn):
     cursor = conn.cursor()
@@ -380,7 +380,8 @@ def listAllAuthors(conn):
 
     distinct_authors = cursor.fetchall()
 
-    printColumns(distinct_authors, cursor)
+    # printColumns(distinct_authors, cursor)
+    return distinct_authors
 
 
 def listBookTitles(conn):
@@ -489,11 +490,10 @@ def listWordInTitle(conn):
 
 # MAIN ------------------------------------------------------------------------------------------------------------------------------
 
+conn = sqlite3.connect('library.db')
 
 def main():
-    # Open connection
-    conn = sqlite3.connect('library.db')
-
+    
     createDataBase(conn)
 
     action = defineAction()
@@ -532,4 +532,4 @@ def main():
     print('Gracias por visitar la biblioteca')
 
 
-main()
+# main()
