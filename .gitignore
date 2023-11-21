@@ -1,0 +1,31 @@
+# Byte-compiled / optimized Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python cache files
+*.pyc
+
+# Virtual environment
+venv/
+env/
+*.env
+
+# Logs and databases
+*.log
+*.db
+
+# Local development settings
+*.local
+*.env
+
+# Compiled Python files
+*.pyc
+
+# IDE settings
+.vscode/
+.idea/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/

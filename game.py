@@ -13,6 +13,8 @@ pygame.display.set_caption("Library")
 line_height = 25
 height = 280
 processed_text = []
+processed_text_book_title = []
+processed_text_list_everything = []
 x_id = 160
 x_isbn = 200
 x_title = 400
@@ -38,19 +40,19 @@ def renderAllAuthors(line_height, height):
         screen.blit(book_info, (x_author, height))
         height += line_height
 
-def renderQueryTitleBook(conn,height,book_title):
-    book_data = queryTitleBook(conn,book_title) 
+def renderQueryTitleBook(height):
+    all_book_titles_flat = [element for tuple_item in processed_text_book_title for element in tuple_item]
+    if len(all_book_titles_flat) == 0:
+        return
 
-    print(book_title)
-
-    id = font.render(str(book_data[0][0]),True,(0,0,0))
-    isbn = font.render(str(book_data[0][1]),True,(0,0,0))
-    title = font.render(str(book_data[0][2]),True,(0,0,0))
-    author = font.render(str(book_data[0][3]),True,(0,0,0))
-    pages = font.render(str(book_data[0][4]),True,(0,0,0))
-    edition_date = font.render(str(book_data[0][5]),True,(0,0,0))
-    editorial = font.render(str(book_data[0][6]),True,(0,0,0))
-    genre = font.render(str(book_data[0][7]),True,(0,0,0))
+    id = font.render(str(all_book_titles_flat[0]),True,(0,0,0))
+    isbn = font.render(str(all_book_titles_flat[1]),True,(0,0,0))
+    title = font.render(str(all_book_titles_flat[2]),True,(0,0,0))
+    author = font.render(str(all_book_titles_flat[3]),True,(0,0,0))
+    pages = font.render(str(all_book_titles_flat[4]),True,(0,0,0))
+    edition_date = font.render(str(all_book_titles_flat[5]),True,(0,0,0))
+    editorial = font.render(str(all_book_titles_flat[6]),True,(0,0,0))
+    genre = font.render(str(all_book_titles_flat[7]),True,(0,0,0))
     screen.blit(id,(x_id,height))
     screen.blit(isbn,(x_isbn,height))
     screen.blit(title,(x_title,height))
@@ -60,9 +62,36 @@ def renderQueryTitleBook(conn,height,book_title):
     screen.blit(editorial,(x_editorial,height))
     screen.blit(genre,(x_genre,height))
 
-def processInput(text):
-    global processed_text
+def renderListEverything(height):
+    local_height = height
+    all_list_everything_flat = [element for tuple_item in processed_text_list_everything for element in tuple_item]
+    if len(all_list_everything_flat) == 0:
+        return
 
+    for index, book in enumerate(processed_text_list_everything):
+        book_id, book_isbn,book_title, book_author, book_pages, book_edition_date, book_editorial, book_genre = book
+        id = font.render(str(book_id), True, (0, 0, 0))
+        isbn = font.render(str(book_isbn), True, (0, 0, 0))
+        title = font.render(str(book_title), True, (0, 0, 0))
+        author = font.render(str(book_author), True, (0, 0, 0))
+        pages = font.render(str(book_pages), True, (0, 0, 0))
+        edition_date = font.render(str(book_edition_date), True, (0, 0, 0))
+        editorial = font.render(str(book_editorial), True, (0, 0, 0))
+        genre = font.render(str(book_genre), True, (0, 0, 0))
+        screen.blit(id, (x_id, local_height))
+        screen.blit(isbn, (x_isbn, local_height))
+        screen.blit(title, (x_title, local_height))
+        screen.blit(author, (x_author, local_height))
+        screen.blit(pages, (x_pages, local_height))
+        screen.blit(edition_date, (x_editiondate, local_height))
+        screen.blit(editorial, (x_editorial, local_height))
+        screen.blit(genre, (x_genre, local_height))
+        local_height += line_height
+def processInput(text):
+    global processed_text,processed_text_book_title, processed_text_list_everything
+    processed_text = []
+    processed_text_book_title = []
+    processed_text_list_everything = []
     split_text = text.split('-')
     action = split_text[0]
 
@@ -70,16 +99,16 @@ def processInput(text):
     #         addBook(conn)
 #     elif action == 'D':
 #         deleteBook(conn)
-#     elif action == 'L':
-#         listEverything(conn)
-    if action == 'QT':
+    if action == 'L':
+         processed_text_list_everything = listEverything(conn)
+    elif action == 'QT':
         book_info = split_text[1]
-        renderQueryTitleBook(conn,height,book_info)
+        processed_text_book_title = queryTitleBook(conn,book_info)
 
 #     elif action == 'M':
 #         modifyBook(conn)
     elif action == 'LAA':
-        LAA_processed_text = listAllAuthors(conn)
+        processed_text = listAllAuthors(conn)
 #     elif action == 'LT':
 #         listBookTitles(conn)
 #     elif action == 'LG':
@@ -137,7 +166,7 @@ while running:
     input_rect = input.get_rect(topleft = (140, 920))
     screen.blit(input,input_rect)
 
-    book1_rect = book_random1.get_rect(center = (1760,320))
+    book1_rect = book_random1.get_rect(center = (1760,298))
 
     screen.blit(welcome,welcome_rect)
     screen.blit(book_random1,book1_rect)
@@ -184,7 +213,8 @@ while running:
                 processInput(text_copy)
         
     renderAllAuthors(line_height, height)
-
+    renderQueryTitleBook(height)
+    renderListEverything(height)
         # processed_text = text.render(processed_text,True,(0,0,0))
         # screen.blit(processed_text,)
 

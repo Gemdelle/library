@@ -401,7 +401,7 @@ def listEverything(conn):
     cursor.execute("SELECT * FROM books")
     data = cursor.fetchall()
 
-    printColumns(data, cursor)
+    return data
 
 
 def listGenre(conn):
